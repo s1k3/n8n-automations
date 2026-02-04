@@ -1,0 +1,337 @@
+{
+  "name": "NSAA database import",
+  "nodes": [
+    {
+      "parameters": {
+        "command": "find $(pwd) -type f",
+        "cwd": "/home/robin/Databases"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -1280,
+        -128
+      ],
+      "id": "2e948fed-e10d-4c4f-b877-695fb49af7ab",
+      "name": "Execute a command",
+      "credentials": {
+        "sshPassword": {
+          "id": "ZRaANhlq7MrOaQL8",
+          "name": "Local"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1584,
+        -400
+      ],
+      "id": "5e042c60-8983-4246-850e-b595e386618d",
+      "name": "LIST FILES"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.files }}",
+                    "rightValue": "nsaaofficials",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "96947ca3-6dc0-4d7b-906a-fbd954ad5e53"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "92857e34-807b-4c20-99e8-7e6c893ff57f",
+                    "leftValue": "={{ $json.files }}",
+                    "rightValue": "nsaascores",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -416,
+        -112
+      ],
+      "id": "3fe93985-edfb-4e9c-b972-fc664d8ead16",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "jsCode": "let result = [];\n\nreturn {\n  files:$input.first().json.stdout.split(\"\\n\")\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1056,
+        -128
+      ],
+      "id": "38553156-74e8-452f-ab7a-1de484e6fafb",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SET FOREIGN_KEY_CHECKS=0;\n\nDROP DATABASE nsaascores;\nDROP DATABASE nsaaofficials;\n\nCREATE DATABASE nsaascores;\nCREATE DATABASE nsaaofficials;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        -1504,
+        -128
+      ],
+      "id": "e4e32ff9-206d-41c3-8dc9-b50ae6ead219",
+      "name": "Clear Databases",
+      "credentials": {
+        "mySql": {
+          "id": "G6VfbnpC7gemBl0l",
+          "name": "Local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "files",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        -128
+      ],
+      "id": "2529ff11-ab24-420d-a221-0833849da2fb",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -608,
+        -128
+      ],
+      "id": "a11f3ba7-e38e-4ec7-8331-353f70f836cb",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        -336
+      ],
+      "id": "d1f4669b-005f-4367-a067-55f882d112de",
+      "name": "END"
+    },
+    {
+      "parameters": {
+        "command": "=mysql -u n8n -p123456 --init-command=\"SET FOREIGN_KEY_CHECKS=0;\" nsaaofficials < \"{{ $json.files }}\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        -128
+      ],
+      "id": "516cdd47-79c5-4a32-a617-f3f750fd2d59",
+      "name": "Execute a command1",
+      "credentials": {
+        "sshPassword": {
+          "id": "ZRaANhlq7MrOaQL8",
+          "name": "Local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "command": "=mysql -u n8n -p123456 --init-command=\"SET FOREIGN_KEY_CHECKS=0;\" nsaascores < \"{{ $json.files }}\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        96
+      ],
+      "id": "a935b7e2-6a96-46b4-9d30-9dab69990414",
+      "name": "Execute a command2",
+      "credentials": {
+        "sshPassword": {
+          "id": "ZRaANhlq7MrOaQL8",
+          "name": "Local"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "LIST FILES": {
+      "main": [
+        [
+          {
+            "node": "Clear Databases",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Execute a command1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a command2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "END",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command2": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clear Databases": {
+      "main": [
+        [
+          {
+            "node": "Execute a command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "ec1dc8c2-1954-4cca-a7ad-236e911ed960",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a3d389b619ed7b7617e5015e47233a47eeb71f53020ed86b7919397c86ab8204"
+  },
+  "id": "GdoTsyVGQGLVKZ_-wW6dR",
+  "tags": []
+}

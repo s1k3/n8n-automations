@@ -1,0 +1,841 @@
+{
+  "name": "Dev Import",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        528
+      ],
+      "id": "a8e9aa75-b882-41e3-9c32-08a4db8e004b",
+      "name": "START"
+    },
+    {
+      "parameters": {
+        "command": "find $(pwd) -name \"*.sql\"",
+        "cwd": "/home/robin/Databases"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        272
+      ],
+      "id": "30c8c56e-dd33-4195-b6ec-b4145ab0baaf",
+      "name": "List Files",
+      "credentials": {
+        "sshPassword": {
+          "id": "ZRaANhlq7MrOaQL8",
+          "name": "Local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  files:$input.first().json.stdout.split(\"\\n\")\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -496,
+        272
+      ],
+      "id": "18f17903-abda-4633-a897-eb5ccd828c4c",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "files",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        272
+      ],
+      "id": "c05f7659-9a07-4dd8-bc95-00f2881927ee",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -80,
+        272
+      ],
+      "id": "2530df79-e223-4ed5-8ac2-eba5e2c46b83",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "amount": 3
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        768,
+        288
+      ],
+      "id": "f4fb2fff-fce2-417c-9864-f00060879954",
+      "name": "Wait",
+      "webhookId": "20ec7251-57c0-443e-86ba-84ce25e1f19e"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "download",
+        "path": "={{ $json.files }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        272,
+        288
+      ],
+      "id": "9d2d4570-1f91-47ef-80de-c934f72568a3",
+      "name": "Download a file",
+      "credentials": {
+        "sshPassword": {
+          "id": "ZRaANhlq7MrOaQL8",
+          "name": "Local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "find $(pwd) -name \"*.sql\"",
+        "cwd": "/var/www/html/sql"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        512
+      ],
+      "id": "ea518267-e9ef-418d-aae3-72051002a02e",
+      "name": "Execute a command",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "if($input.first().json.stdout === \"\"){\n  return {\n    files : []\n  };\n}\n\nreturn {\n  files:$input.first().json.stdout.split(\"\\n\")\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        512
+      ],
+      "id": "f8ac73bf-e52f-4dd3-96e2-ba073c56eb49",
+      "name": "Remote Files"
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "resource": "file",
+        "path": "/var/www/html/sql",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        512,
+        288
+      ],
+      "id": "b6cb937c-7a02-47be-a056-9966ed997d60",
+      "name": "Upload a file",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.files }}",
+                    "rightValue": 1,
+                    "operator": {
+                      "type": "array",
+                      "operation": "empty",
+                      "singleValue": true
+                    },
+                    "id": "47df1834-cd65-4cc1-96b6-46d2a3c81f90"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "5f409f35-1233-41fb-a1c9-ed491e63652c",
+                    "leftValue": "={{ $json.files }}",
+                    "rightValue": 0,
+                    "operator": {
+                      "type": "array",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        128,
+        512
+      ],
+      "id": "d288acd1-58bd-4a23-ba54-0b613f85d8d8",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "mysql -u n8n -p123456 -e \"SET FOREIGN_KEY_CHECKS=0;\" -e \"DROP DATABASE IF EXISTS nsaascores;\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        -160
+      ],
+      "id": "440c3f9f-ce29-4824-bede-14af86214430",
+      "name": "DROP NSAASCORES",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "mysql -u n8n -p123456 -e \"SET FOREIGN_KEY_CHECKS=0;\" -e \"DROP DATABASE IF EXISTS nsaaofficials;\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -528,
+        -160
+      ],
+      "id": "2248de33-f7de-42c0-8fd5-e8cefeddcc2c",
+      "name": "DROP NSAAOFFICIALS",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "mysql -u n8n -p123456 -e \"SET FOREIGN_KEY_CHECKS=0;\" -e \"CREATE DATABASE  nsaascores;\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -320,
+        -160
+      ],
+      "id": "e1d0155b-0f65-4d0c-b346-3190d48c44da",
+      "name": "CREATE NSAASCORES",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "mysql -u n8n -p123456 -e \"SET FOREIGN_KEY_CHECKS=0;\" -e \"CREATE DATABASE  nsaaofficials;\""
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -160
+      ],
+      "id": "3e4af693-984a-454b-aa77-92c3d2258193",
+      "name": "CREATE NSAAOFFICIALS",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "files",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        368,
+        528
+      ],
+      "id": "a61a6d7b-b63d-4c58-8b53-e00bb88d4128",
+      "name": "Split Out Older Dev Files"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        656,
+        528
+      ],
+      "id": "d7a203ba-77f6-4d78-8522-1cbc69687009",
+      "name": "Loop Over Older Dev Files"
+    },
+    {
+      "parameters": {
+        "protocol": "sftp",
+        "operation": "delete",
+        "path": "={{ $json.files }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.ftp",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        528
+      ],
+      "id": "9fec6f67-73d1-47c7-9bdc-4af4f26bb09a",
+      "name": "Delete Older Files",
+      "credentials": {
+        "sftp": {
+          "id": "7j4dtwW6Jlx6T7MJ",
+          "name": "SFTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "find $(pwd) -type f",
+        "cwd": "/var/www/html/sql"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        144,
+        -128
+      ],
+      "id": "82b2ec71-3d9b-4b4a-b01c-cef8ef0ff5d3",
+      "name": "List Dev SQL files",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "\n\nreturn {\n  files:$input.first().json.stdout.split(\"\\n\")\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        368,
+        -128
+      ],
+      "id": "137a7d95-cc44-4f8c-a3c3-3abc08c0c5d5",
+      "name": "Format Dev SQL files"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "files",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        560,
+        -128
+      ],
+      "id": "d19c0b2e-7c69-4821-8c02-581eae3c9a4b",
+      "name": "Split Out Dev Files"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        816,
+        -128
+      ],
+      "id": "74af2ddd-ee1b-4117-ab5c-6690e849b0aa",
+      "name": "Loop Over Dev Server Files"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.files }}",
+                    "rightValue": "nsaaofficials",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "96947ca3-6dc0-4d7b-906a-fbd954ad5e53"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "92857e34-807b-4c20-99e8-7e6c893ff57f",
+                    "leftValue": "={{ $json.files }}",
+                    "rightValue": "nsaascores",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1056,
+        -112
+      ],
+      "id": "8336eb67-bf00-4cab-8ce1-fd0fb2c79d23",
+      "name": "Deceide Dev database"
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=mysql -u n8n -p123456 --init-command=\"SET FOREIGN_KEY_CHECKS=0;\" nsaaofficials < \"{{ $json.files }}\";"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        1312,
+        -144
+      ],
+      "id": "19df8d96-fb43-4405-a15c-51c047be99a8",
+      "name": "Import To NSAAOFFICIALS",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "privateKey",
+        "command": "=mysql -u n8n -p123456 --init-command=\"SET FOREIGN_KEY_CHECKS=0;\" nsaascores < \"{{ $json.files }}\";"
+      },
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        48
+      ],
+      "id": "325554f8-cccd-4161-8599-a3f90ee288e2",
+      "name": "Import To NSAASCORES",
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "oIDOEDmUeAvziy5a",
+          "name": "SSH Private Key account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "START": {
+      "main": [
+        [
+          {
+            "node": "Execute a command",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Files": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "List Dev SQL files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download a file": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a command": {
+      "main": [
+        [
+          {
+            "node": "Remote Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Remote Files": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "DROP NSAASCORES",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Split Out Older Dev Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DROP NSAASCORES": {
+      "main": [
+        [
+          {
+            "node": "DROP NSAAOFFICIALS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DROP NSAAOFFICIALS": {
+      "main": [
+        [
+          {
+            "node": "CREATE NSAASCORES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE NSAASCORES": {
+      "main": [
+        [
+          {
+            "node": "CREATE NSAAOFFICIALS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CREATE NSAAOFFICIALS": {
+      "main": [
+        [
+          {
+            "node": "List Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Older Dev Files": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Older Dev Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Older Dev Files": {
+      "main": [
+        [
+          {
+            "node": "DROP NSAASCORES",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delete Older Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Older Files": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Older Dev Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Dev SQL files": {
+      "main": [
+        [
+          {
+            "node": "Format Dev SQL files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Dev SQL files": {
+      "main": [
+        [
+          {
+            "node": "Split Out Dev Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out Dev Files": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Dev Server Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Dev Server Files": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Deceide Dev database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deceide Dev database": {
+      "main": [
+        [
+          {
+            "node": "Import To NSAAOFFICIALS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Import To NSAASCORES",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import To NSAAOFFICIALS": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Dev Server Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Import To NSAASCORES": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Dev Server Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "51c14eb8-2638-4ab4-b13f-ac7e9c951628",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a3d389b619ed7b7617e5015e47233a47eeb71f53020ed86b7919397c86ab8204"
+  },
+  "id": "oCZ3FvrVW2NemyjHzryn5",
+  "tags": []
+}
